@@ -102,8 +102,9 @@ Three things the script handles that catch people out:
 
 ## Status
 
-Version 1.1.0. Used by the author on real calls. Not yet published on the Chrome
-Web Store, so installation is "Load unpacked". Issues and pull requests welcome.
+Version 1.1.0. The two-channel split is verified on a synthetic stereo fixture and
+on a short live test. Not yet published on the Chrome Web Store, so installation
+is "Load unpacked". Issues and pull requests welcome.
 
 ## License
 
