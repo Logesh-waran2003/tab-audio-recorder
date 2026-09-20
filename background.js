@@ -31,8 +31,18 @@ async function liveStatus() {
 
 // Discreet mode: no badge at all, so nothing shows in a full-screen share.
 // The popup still tells the truth, so a recording can never be lost silently.
+const iconSet = (rec) => ({
+  16: `icons/icon16${rec ? '-rec' : ''}.png`,
+  32: `icons/icon32${rec ? '-rec' : ''}.png`,
+  48: `icons/icon48${rec ? '-rec' : ''}.png`,
+  128: `icons/icon128${rec ? '-rec' : ''}.png`
+});
+
 async function setBadge(on) {
   const { discreet } = await chrome.storage.local.get('discreet');
+  // The whole icon turns red while recording. That survives a hidden badge and
+  // reads at a glance, which matters now that a shortcut can start a recording.
+  chrome.action.setIcon({ path: iconSet(on && !discreet) });
   if (discreet) {
     chrome.action.setBadgeText({ text: '' });
     chrome.action.setTitle({ title: 'Tab Audio Recorder' });

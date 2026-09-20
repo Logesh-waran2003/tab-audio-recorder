@@ -2,43 +2,114 @@
 <html>
 <head><meta charset="utf-8">
 <style>
-  body { font: 13px -apple-system, system-ui, sans-serif; width: 260px; padding: 12px; margin: 0; }
-  h1 { font-size: 13px; margin: 0 0 8px; }
-  button { width: 100%; padding: 9px; font-size: 13px; border-radius: 6px; border: 0; cursor: pointer; }
-  #go.rec { background: #c62828; color: #fff; }
-  #go.idle { background: #1565c0; color: #fff; }
-  #microw { display: flex; align-items: flex-start; gap: 7px; margin: 10px 0 2px; }
-  #microw label { font-size: 12.5px; cursor: pointer; line-height: 1.35; }
-  #microw label span { display: block; color: #777; font-size: 11px; }
-  #info { margin-top: 8px; color: #555; font-size: 12px; min-height: 30px; }
-  #info.err { color: #c62828; }
-  #grant { margin-top: 6px; font-size: 11.5px; color: #1565c0; text-decoration: underline;
-           cursor: pointer; display: none; }
-  #reset { margin-top: 8px; font-size: 11px; color: #888; text-decoration: underline;
-           cursor: pointer; display: none; }
+  :root {
+    --them: #1565c0;
+    --me:   #c62828;
+    --ink:  #14161a;
+    --mute: #8a919c;
+    --edge: #e6e8ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    width: 320px; margin: 0; padding: 20px; background: #fbfbfd; color: var(--ink);
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; }
+  h1 { font-size: 15px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; }
+  #state { font-size: 12px; color: var(--mute); display: flex; align-items: center; gap: 6px; }
+  body.rec #state { color: var(--me); font-weight: 600; }
+  #state .led { width: 7px; height: 7px; border-radius: 9px; background: var(--me); display: none; }
+  body.rec #state .led { display: block; animation: pulse 1.4s infinite; }
+
+  .panel { margin: 16px 0; padding: 16px; border-radius: 12px; background: #f2f3f7; }
+  #time {
+    font: 300 34px/1 -apple-system, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums; letter-spacing: -1.2px; text-align: center; color: #20242b;
+  }
+
+  .ch { display: flex; align-items: center; gap: 9px; margin-top: 13px; }
+  .ch .nm { font: 600 9.5px ui-monospace, monospace; letter-spacing: 1.1px; width: 32px; color: #5c6572; }
+  .ch .bars { flex: 1; height: 15px; display: flex; gap: 2px; align-items: center; }
+  .ch .bars i { flex: 1; border-radius: 2px; background: currentColor; height: 12%; opacity: .22; }
+  .ch .db {
+    font: 500 10.5px ui-monospace, monospace; width: 48px; text-align: right;
+    color: var(--mute); font-variant-numeric: tabular-nums;
+  }
+
+  button {
+    width: 100%; padding: 13px; border: 0; border-radius: 11px; color: #fff; cursor: pointer;
+    background: var(--them); font: 600 14px -apple-system, system-ui, sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  button:disabled { opacity: .6; cursor: default; }
+  body.rec button { background: var(--me); }
+  .kbd {
+    font: 600 10px ui-monospace, monospace; padding: 2px 5px; border-radius: 4px;
+    border: 1px solid currentColor; opacity: .55;
+  }
+
+  .opts { margin-top: 16px; display: grid; gap: 13px; }
+  .opt { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .opt .txt { font-size: 12.5px; color: #39414c; }
+  .opt small { display: block; color: var(--mute); font-size: 11px; margin-top: 1px; }
+  .sw { width: 34px; height: 20px; border-radius: 20px; background: #d9dce3; position: relative;
+        flex: none; margin-top: 2px; cursor: pointer; transition: background .15s; }
+  .sw[aria-checked="true"] { background: var(--them); }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+               border-radius: 16px; background: #fff; transition: left .15s; }
+  .sw[aria-checked="true"]::after { left: 16px; }
+  .sw[aria-disabled="true"] { opacity: .45; cursor: default; }
+
+  #info { margin-top: 14px; font-size: 11.5px; color: var(--mute); }
+  #info.err { color: var(--me); }
+  .link { margin-top: 8px; font-size: 11.5px; color: var(--them); text-decoration: underline;
+          cursor: pointer; display: none; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .2 } }
 </style>
 </head>
 <body>
-  <h1>Tab Audio Recorder</h1>
-  <button id="go" class="idle">Start recording</button>
-
-  <div id="microw">
-    <input type="checkbox" id="mic" checked>
-    <label for="mic">Record my microphone too
-      <span>Them on the left channel, you on the right.</span>
-    </label>
+  <div class="row">
+    <h1>
+      <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4" y="7" width="5" height="10" rx="2.5" fill="#1565c0"/>
+        <rect x="15" y="4" width="5" height="16" rx="2.5" fill="#c62828"/>
+      </svg>
+      Tab Audio
+    </h1>
+    <span id="state"><span class="led"></span><span id="stateText">Ready</span></span>
   </div>
 
-  <div id="microw">
-    <input type="checkbox" id="discreet">
-    <label for="discreet">Quiet toolbar
-      <span>No REC badge. Use when you screen share.</span>
-    </label>
+  <div class="panel">
+    <div id="time">00:00</div>
+    <div class="ch" style="color:#1565c0">
+      <span class="nm">THEM</span>
+      <div class="bars" id="barsThem"></div>
+      <span class="db" id="dbThem">—</span>
+    </div>
+    <div class="ch" style="color:#c62828">
+      <span class="nm">ME</span>
+      <div class="bars" id="barsMe"></div>
+      <span class="db" id="dbMe">—</span>
+    </div>
   </div>
 
-  <div id="info">Ready.</div>
-  <div id="grant">Microphone blocked — click to allow it once</div>
-  <div id="reset">Stuck? Force reset (loses the current recording)</div>
+  <button id="go"><span id="goLabel">Start recording</span><span class="kbd" id="hint">⌘⇧9</span></button>
+
+  <div class="opts">
+    <div class="opt">
+      <div class="txt">Record my microphone<small>You go on the right channel.</small></div>
+      <div class="sw" id="mic" role="switch" tabindex="0" aria-checked="true"></div>
+    </div>
+    <div class="opt">
+      <div class="txt">Hide the REC badge<small>For screen sharing. This popup still shows it.</small></div>
+      <div class="sw" id="discreet" role="switch" tabindex="0" aria-checked="false"></div>
+    </div>
+  </div>
+
+  <div id="info">Saves to Downloads/tab-audio</div>
+  <div class="link" id="grant">Microphone blocked — click to allow it once</div>
+  <div class="link" id="reset">Stuck? Force reset (loses the current recording)</div>
+
   <script src="popup.js"></script>
 </body>
 </html>

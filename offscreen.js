@@ -14,6 +14,21 @@ let tabStream = null;
 let micStream = null;
 let audioCtx = null;
 let usedMic = false;
+let tabAnalyser = null;
+let micAnalyser = null;
+
+// Loudness of one channel, in dBFS. The popup draws this as a meter.
+// A dead microphone reads -90 and you can see it before the call, not after.
+function levelDb(analyser) {
+  if (!analyser) return -90;
+  const buf = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buf);
+  let sum = 0;
+  for (const v of buf) sum += v * v;
+  const rms = Math.sqrt(sum / buf.length);
+  if (rms < 1e-5) return -90;
+  return Math.max(-90, 20 * Math.log10(rms));
+}
 
 function cleanup() {
   for (const s of [tabStream, micStream]) {
@@ -21,6 +36,8 @@ function cleanup() {
   }
   tabStream = null;
   micStream = null;
+  tabAnalyser = null;
+  micAnalyser = null;
   if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
 }
 
@@ -65,12 +82,19 @@ async function start(streamId, wantMic) {
   // Tab capture silences the tab. Play the stream back so you still hear it.
   tabSrc.connect(audioCtx.destination);
 
+  tabAnalyser = audioCtx.createAnalyser();
+  tabAnalyser.fftSize = 1024;
+  tabSrc.connect(tabAnalyser);
+
   const merger = audioCtx.createChannelMerger(2);
   tabSrc.connect(merger, 0, 0);               // left = them
 
   if (micStream) {
     const micSrc = audioCtx.createMediaStreamSource(micStream);
     micSrc.connect(merger, 0, 1);             // right = you
+    micAnalyser = audioCtx.createAnalyser();
+    micAnalyser.fftSize = 1024;
+    micSrc.connect(micAnalyser);
     // The microphone is never played back, so you do not hear yourself.
   } else {
     tabSrc.connect(merger, 0, 1);             // no mic: same audio in both ears
@@ -112,6 +136,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           ok: true,
           recording: !!recorder && recorder.state === 'recording',
           usedMic
+        });
+        return;
+      }
+      if (msg.type === 'levels') {
+        sendResponse({
+          ok: true,
+          recording: !!recorder && recorder.state === 'recording',
+          them: levelDb(tabAnalyser),
+          me: usedMic ? levelDb(micAnalyser) : null
         });
         return;
       }

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Tab Audio Recorder",
-  "version": "1.2.0",
-  "description": "Record any tab plus your own microphone on separate channels, then get a transcript that knows who said what. Fully local.",
+  "version": "1.3.0",
+  "description": "Record any tab plus your own microphone on separate channels, with live meters, a global shortcut, and a transcript that knows who said what. Fully local.",
   "permissions": [
     "activeTab",
     "tabCapture",
@@ -20,8 +20,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://meet.google.com/*"],
-      "js": ["speakers.js"],
+      "matches": [
+        "https://meet.google.com/*"
+      ],
+      "js": [
+        "speakers.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -43,9 +47,18 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Tab Audio Recorder"
+    "default_title": "Tab Audio Recorder",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   }
 }
