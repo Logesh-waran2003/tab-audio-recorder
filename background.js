@@ -79,6 +79,7 @@ async function startRecording() {
 
   await chrome.storage.local.set({
     meta: { startedAt: Date.now(), title: tab.title || '', tabId: tab.id, usedMic: !!r.usedMic },
+    speakers: [],
     lastError: ''
   });
   await setBadge(true);
@@ -91,10 +92,43 @@ async function stopRecording() {
   await askOffscreen('stop');   // the 'saved' message follows and does the download
 }
 
+// --- speaker names -----------------------------------------------------------
+// The content script on a Meet page reports who is speaking. We keep the list in
+// storage (the MV3 worker sleeps and would lose it in memory) and write it beside
+// the recording as JSON. transcribe.sh turns THEM into real names from that file.
+
+const MAX_SPEAKER_SEGMENTS = 5000;
+
+async function noteSpeaker(name, at) {
+  const st = await liveStatus();
+  if (!st.recording || !st.startedAt) return;          // only while recording
+  const { speakers = [] } = await chrome.storage.local.get('speakers');
+  const t = Math.max(0, at - st.startedAt);            // ms from the start of the file
+  const last = speakers[speakers.length - 1];
+  if (last && last.name === name && t - last.t < 5000) return;
+  speakers.push({ t, name });
+  if (speakers.length > MAX_SPEAKER_SEGMENTS) speakers.shift();
+  await chrome.storage.local.set({ speakers });
+}
+
+// chrome.downloads needs a URL. A service worker has no URL.createObjectURL,
+// so the sidecar goes out as a data: URL.
+async function saveSpeakerFile(recordingName) {
+  const { speakers = [] } = await chrome.storage.local.get('speakers');
+  await chrome.storage.local.set({ speakers: [] });
+  if (!speakers.length) return;
+  const json = JSON.stringify({ version: 1, segments: speakers }, null, 2);
+  const url = 'data:application/json;base64,' + btoa(unescape(encodeURIComponent(json)));
+  const filename = recordingName.replace(/\.webm$/, '') + '-speakers.json';
+  await chrome.downloads.download({ url, filename, saveAs: false });
+}
+
 async function finish(url, withMic) {
   const meta = (await chrome.storage.local.get('meta')).meta || {};
   const twoCh = withMic !== undefined ? withMic : !!meta.usedMic;
-  await chrome.downloads.download({ url, filename: safeName(meta.title, twoCh), saveAs: false });
+  const name = safeName(meta.title, twoCh);
+  await chrome.downloads.download({ url, filename: name, saveAs: false });
+  await saveSpeakerFile(name);
   await chrome.storage.local.set({ meta: {} });
   await setBadge(false);
   if (await hasOffscreen()) await chrome.offscreen.closeDocument();
@@ -126,6 +160,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const st = await liveStatus();
         await setBadge(st.recording);
         sendResponse({ ok: true });
+      } else if (msg.type === 'speaker') {
+        await noteSpeaker(msg.name, msg.at);
+        sendResponse({ ok: true });
       } else if (msg.type === 'error') {
         await chrome.storage.local.set({ lastError: msg.error });
         await setBadge(false);
@@ -136,6 +173,39 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
   })();
   return true;
+});
+
+// --- keyboard shortcut -------------------------------------------------------
+// A shortcut works with the popup closed, so it must say what it did. Without
+// this you can silently record nothing, or silently keep recording after you
+// believe you stopped.
+function toast(title, message) {
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: 'icons/icon128.png',
+    title,
+    message,
+    silent: false
+  });
+}
+
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command !== 'toggle-recording') return;
+  try {
+    const st = await liveStatus();
+    if (st.recording) {
+      await stopRecording();
+      toast('Stopped', 'Saving to Downloads/tab-audio');
+    } else {
+      const r = await startRecording();
+      toast(
+        'Recording',
+        r.usedMic ? 'Tab + your microphone, 2 channels' : 'Tab only — no microphone'
+      );
+    }
+  } catch (e) {
+    toast('Tab Audio Recorder', String((e && e.message) || e));
+  }
 });
 
 // If the captured tab closes, stop and save what we have.

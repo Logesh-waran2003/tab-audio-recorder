@@ -1,18 +1,45 @@
 {
   "manifest_version": 3,
   "name": "Tab Audio Recorder",
-  "version": "1.1.0",
-  "description": "Record the audio of any tab (YouTube live included) plus your own microphone on a separate channel, then transcribe it.",
+  "version": "1.2.0",
+  "description": "Record any tab plus your own microphone on separate channels, then get a transcript that knows who said what. Fully local.",
   "permissions": [
     "activeTab",
     "tabCapture",
     "audioCapture",
     "offscreen",
     "downloads",
-    "storage"
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*"
   ],
   "background": {
     "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["speakers.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "toggle-recording": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+9",
+        "mac": "Command+Shift+9"
+      },
+      "description": "Start or stop recording",
+      "global": true
+    },
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+A",
+        "mac": "Alt+Shift+A"
+      }
+    }
   },
   "action": {
     "default_popup": "popup.html",

@@ -10,6 +10,13 @@ Whisper model can label the speakers:
     [00:12:04] THEM: shall we start with the problem statement?
     [00:12:11] ME:   yes, I want to raise one thing first.
 
+On a Google Meet call with live captions on, it goes one better and uses the real
+names:
+
+    [00:12:04] PRIYA SHARMA: shall we start with the problem statement?
+    [00:12:11] ME:           yes, I want to raise one thing first.
+    [00:12:19] DANIEL OK:    go ahead, that is what this call is for.
+
 Audio never leaves the machine. There is no account, no server and no upload.
 
 Records any Chrome tab, audio only. It keeps recording when the tab is in the
@@ -92,6 +99,38 @@ Three things the script handles that catch people out:
   System Settings -> Sound -> Input before you start.
 - Merge order comes from each channel's own timestamps. When one person is silent
   for a long stretch, their next line can be placed a few seconds off.
+
+## Real names on Google Meet
+
+With more than two people, the tab channel holds all of them mixed together, so the
+transcript can only say `THEM`. Meet already knows who is talking — it prints the name
+above each live caption. The extension reads that name off the page and stamps it on
+the timeline.
+
+1. Turn on live captions in the meeting (the **CC** button).
+2. Record as usual.
+3. A small `…-speakers.json` file is saved beside the recording.
+4. `transcribe.sh` finds it and uses the names.
+
+No captions, no names — the transcript falls back to `THEM` and nothing breaks. Nothing
+is read from the audio and nothing leaves the machine; this is page text only.
+
+Google changes its markup often. To check the reader still works, open the browser
+console on a Meet page and run `__tabAudioSpeakers()`.
+
+## Keyboard shortcuts
+
+| Action | Mac | Windows / Linux |
+|---|---|---|
+| Start / stop recording | `⌘⇧9` | `Ctrl+Shift+9` |
+| Open the popup | `⌥⇧A` | `Alt+Shift+A` |
+
+Start/stop is a **global** shortcut: it works while Chrome sits behind Zoom or Meet.
+Chrome only allows global shortcuts built from `Command/Ctrl + Shift + a digit`, which
+is why it is a number. Change them at `chrome://extensions/shortcuts`.
+
+Because the popup is usually closed when you press it, a short system notification
+confirms what happened: *Recording — tab + your microphone, 2 channels*.
 
 ## Requirements
 

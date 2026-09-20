@@ -113,8 +113,15 @@ for ch in them me; do
 done
 
 echo "3/3 Merging into one labelled transcript"
-python3 - "$TMP/them.tsv" "$TMP/me.tsv" "$BASE.txt" <<'PY'
-import sys, csv
+
+# Written by the extension on a Google Meet call, when live captions were on.
+# It turns THEM into the real names of the people who spoke.
+SPEAKERS="${BASE}-speakers.json"
+[ -f "$SPEAKERS" ] || SPEAKERS=""
+[ -n "$SPEAKERS" ] && echo "  using speaker names from $(basename "$SPEAKERS")"
+
+python3 - "$TMP/them.tsv" "$TMP/me.tsv" "$BASE.txt" "$SPEAKERS" <<'PY'
+import sys, csv, json, os
 
 def read(path, who):
     rows = []
@@ -131,7 +138,37 @@ def read(path, who):
     return rows
 
 them_tsv, me_tsv, out = sys.argv[1], sys.argv[2], sys.argv[3]
+speakers_path = sys.argv[4] if len(sys.argv) > 4 else ''
+
+# Segments look like {"t": 12040, "name": "Priya Sharma"}, t in ms from the start.
+segments = []
+if speakers_path and os.path.exists(speakers_path):
+    with open(speakers_path, encoding='utf-8') as f:
+        segments = sorted(json.load(f).get('segments', []), key=lambda s: s['t'])
+
+# Captions appear a moment AFTER the words are said, so look slightly ahead too.
+LEAD_MS = 2000
+
+def speaker_at(ms):
+    """The last person Meet showed as speaking at this point in the recording."""
+    name = ''
+    for seg in segments:
+        if seg['t'] <= ms + LEAD_MS:
+            name = seg['name']
+        else:
+            break
+    return name.upper() if name else ''
+
 lines = read(them_tsv, 'THEM') + read(me_tsv, 'ME')
+
+if segments:
+    named = []
+    for ms, who, text in lines:
+        if who == 'THEM':
+            who = speaker_at(ms) or 'THEM'   # fall back when nobody was captioned
+        named.append((ms, who, text))
+    lines = named
+
 lines.sort(key=lambda x: x[0])
 
 def stamp(ms):
