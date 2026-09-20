@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Allow the microphone</title>
+<style>
+  body { font: 15px/1.6 -apple-system, system-ui, sans-serif; max-width: 520px;
+         margin: 60px auto; padding: 0 24px; color: #17202a; }
+  h1 { font-size: 21px; margin: 0 0 10px; }
+  p { color: #555; }
+  button { margin-top: 18px; padding: 11px 20px; font-size: 14px; font-weight: 600;
+           border: 0; border-radius: 8px; background: #1565c0; color: #fff; cursor: pointer; }
+  #out { margin-top: 18px; font-size: 14px; }
+  .ok { color: #0b8d68; font-weight: 600; }
+  .bad { color: #c62828; font-weight: 600; }
+</style>
+</head>
+<body>
+  <h1>Allow the microphone, once</h1>
+  <p>The recorder runs in the background, where Chrome cannot show a permission box.
+  Click below and choose <strong>Allow</strong>. Chrome remembers it, and you will not
+  see this page again.</p>
+  <button id="ask">Allow the microphone</button>
+  <div id="out"></div>
+  <script src="mic-permission.js"></script>
+</body>
+</html>

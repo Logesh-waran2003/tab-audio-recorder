@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Audio Recorder",
+  "version": "1.1.0",
+  "description": "Record the audio of any tab (YouTube live included) plus your own microphone on a separate channel, then transcribe it.",
+  "permissions": [
+    "activeTab",
+    "tabCapture",
+    "audioCapture",
+    "offscreen",
+    "downloads",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Tab Audio Recorder"
+  },
+  "icons": {
+    "128": "icons/icon128.png"
+  }
+}
