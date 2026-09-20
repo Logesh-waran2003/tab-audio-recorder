@@ -3,6 +3,8 @@
 **A Chrome extension that records a meeting and tells you who said what — with no
 cloud service.**
 
+![Tab Audio Recorder in one picture: the tab on one channel, your microphone on the other, merged into a speaker-labelled transcript](docs/demo.gif)
+
 Most tab recorders give you one mixed track. Everyone becomes one voice. This one
 puts the tab on the left channel and your microphone on the right, so a local
 Whisper model can label the speakers:
