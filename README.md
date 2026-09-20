@@ -5,19 +5,43 @@ cloud service.**
 
 ![Tab Audio Recorder in one picture: the tab on one channel, your microphone on the other, merged into a speaker-labelled transcript](docs/demo.gif)
 
-Most tab recorders give you one mixed track. Everyone becomes one voice. This one
-puts the tab on the left channel and your microphone on the right, so a local
-Whisper model can label the speakers:
+<table>
+<tr><td width="50%">
 
-    [00:12:04] THEM: shall we start with the problem statement?
-    [00:12:11] ME:   yes, I want to raise one thing first.
+### Every other tool
 
-On a Google Meet call with live captions on, it goes one better and uses the real
-names:
+```
+[00:12:04] SPEAKER ?: shall we start with
+           the problem statement?
+[00:12:11] SPEAKER ?: yes, I want to raise
+           one thing first.
+[00:12:19] SPEAKER ?: go ahead, that is what
+           this call is for.
+```
 
-    [00:12:04] PRIYA SHARMA: shall we start with the problem statement?
-    [00:12:11] ME:           yes, I want to raise one thing first.
-    [00:12:19] DANIEL OK:    go ahead, that is what this call is for.
+One mixed track. The software has to **guess**
+who spoke — and it gets crosstalk, accents and
+bad audio wrong.
+
+</td><td width="50%">
+
+### This one
+
+```
+[00:12:04] PRIYA: shall we start with
+           the problem statement?
+[00:12:11] ME:    yes, I want to raise
+           one thing first.
+[00:12:19] DANIEL: go ahead, that is what
+           this call is for.
+```
+
+Your microphone is recorded on its **own
+channel**. There is nothing to guess. On Google
+Meet it reads the real names off the page.
+
+</td></tr>
+</table>
 
 Audio never leaves the machine. There is no account, no server and no upload.
 
